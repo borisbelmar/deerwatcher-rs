@@ -13,7 +13,6 @@ pub fn copy_recursive(
   for entry in WalkDir::new(src_dir)
     .into_iter()
     .filter_entry(|e| {
-      println!("path: {:?}", e);
       let path = e.path();
       !match_patterns(ignored_list, path)
     }) {

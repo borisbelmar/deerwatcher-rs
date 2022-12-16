@@ -19,7 +19,6 @@ pub fn match_patterns (patterns: &[&str], path: &Path) -> bool {
           .to_str()
           .unwrap()
           .replace(format!("{}/", parent).as_str(), "");
-        println!("{} contains {}? {}", path_without_parent, pattern, path_without_parent.contains(pattern.as_str()));
         if path_without_parent.contains(pattern.as_str()) {
           ignore = true;
         }
@@ -28,6 +27,5 @@ pub fn match_patterns (patterns: &[&str], path: &Path) -> bool {
     return ignore;
   }
   
-  println!("{} is matched: {}", path.display(), any.is_match(path));
   any.is_match(path)
 }

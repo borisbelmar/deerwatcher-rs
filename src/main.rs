@@ -2,12 +2,28 @@ mod copy;
 mod watcher;
 mod glob;
 
+pub struct Direction {
+  src_dir: String,
+  dst_dir: String,
+}
+
 fn main() {
-  let src_dir = "/Users/borisbelmar/Proyectos/Deerwatcher/test1";
-  let dst_dir = "/Users/borisbelmar/Proyectos/Deerwatcher/test2";
-  let ignored_list = &[".git", "**/target/**/*", "**/src/**/*"];
+  let directions = [
+    Direction {
+      src_dir: "/Users/borisbelmar/Proyectos/Deerwatcher/test1".to_string(),
+      dst_dir: "/Users/borisbelmar/Proyectos/Deerwatcher/test2".to_string(),
+    }
+  ];
 
-  copy::copy_recursive(src_dir, dst_dir, ignored_list).unwrap();
+  let ignored_list = [".git", "**/target/**/*", "**/src/**/*"];
 
-  watcher::watch_and_copy(src_dir, dst_dir, ignored_list)
+  fn handle_event() {
+    println!("Event handled");
+  }
+
+  for direction in &directions {
+    copy::copy_recursive(&direction.src_dir, &direction.dst_dir, &ignored_list).unwrap();
+  }
+
+  watcher::watch_and_copy(&directions, &ignored_list, handle_event).unwrap();
 }
