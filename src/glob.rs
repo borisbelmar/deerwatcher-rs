@@ -12,6 +12,7 @@ pub fn match_patterns (patterns: &Vec<String>, path: &Path) -> bool {
       return false;
     }
     for pattern in patterns {
+      // TODO: Validate this
       if pattern.ends_with("**/*") && pattern.starts_with("**/") {
         let pattern = pattern
           .replace("/**/*", "")

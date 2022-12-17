@@ -2,12 +2,13 @@ mod copy;
 mod watcher;
 mod glob;
 mod config;
+mod execute;
 
-use std::{process::{Command, Stdio}, env};
+use std::env;
+
+use execute::get_event_handler;
 
 use crate::config::get_config;
-
-
 
 fn main() {
   let args: Vec<String> = env::args().collect();
@@ -22,15 +23,7 @@ fn main() {
   let directions = &config.list;
   let command = config.command.as_str();
 
-  let handle_event = || {
-    println!("Event handled");
-    Command::new("sh")
-      .arg("-c")
-      .arg(command)
-      .stdout(Stdio::piped())
-      .output()
-      .expect("failed to execute process");
-  };
+  let handle_event = get_event_handler(command);
 
   directions.iter().for_each(|direction| {
     copy::copy_recursive(
