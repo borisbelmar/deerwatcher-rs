@@ -6,10 +6,48 @@ use std::time::Duration;
 
 use crate::{glob, config::Item};
 
-enum EventType {
-  Create,
-  Write,
-  Remove
+struct EventProps {
+  ignored: bool,
+  src: String,
+  dest: String
+}
+
+fn get_event_props (path: &PathBuf, directions: &Vec<Item>) -> EventProps {
+  let direction = directions.iter().find(|direction| {
+    path.display().to_string().starts_with(&direction.src)
+  }).unwrap();
+
+  let src_path = path.to_str().unwrap();
+  let dst_path = src_path.replace(&direction.src, &direction.dest);
+
+  let ignored = glob::match_patterns(&direction.ignore, &path.as_path());
+
+  EventProps {
+    ignored,
+    src: src_path.to_string(),
+    dest: dst_path
+  }
+}
+
+fn copy_file (event_props: &EventProps) {
+  let src_path = Path::new(&event_props.src);
+  let dst_path = Path::new(&event_props.dest);
+
+  if !&event_props.ignored {
+    fs::create_dir_all(dst_path.parent().unwrap()).unwrap();
+    if Path::new(src_path).is_file() {
+      fs::copy(src_path, dst_path).unwrap();
+    }
+    fs::copy(src_path, dst_path).unwrap();
+  }
+}
+
+fn remove_file (event_props: &EventProps) {
+  let dst_path = Path::new(&event_props.dest);
+
+  if !&event_props.ignored {
+    fs::remove_file(dst_path).unwrap();
+  }
 }
 
 pub fn watch_and_copy(directions: &Vec<Item>, on_event: &dyn Fn()) -> Result<(), std::io::Error> {
@@ -25,61 +63,33 @@ pub fn watch_and_copy(directions: &Vec<Item>, on_event: &dyn Fn()) -> Result<(),
     match rx.recv() {
       // FIXME: Its executing the process twice
       Ok(event) => {
-        let event_name: EventType;
-        let path_event: PathBuf;
 
         match event {
           DebouncedEvent::Create(path) => {
-            path_event = path;
-            event_name = EventType::Create;
+            let event_props = get_event_props(&path, directions);
+            copy_file(&event_props);
+            if !&event_props.ignored {
+              on_event();
+            }
           },
           DebouncedEvent::Write(path) => {
-            path_event = path;
-            event_name = EventType::Write;
+            let event_props = get_event_props(&path, directions);
+            copy_file(&event_props);
+            if !&event_props.ignored {
+              on_event();
+            }
           },
           DebouncedEvent::Remove(path) => {
-            path_event = path;
-            event_name = EventType::Remove;
+            let event_props = get_event_props(&path, directions);
+            remove_file(&event_props);
+            if !&event_props.ignored {
+              on_event();
+            }
           },
           _ => {
             continue;
           },
         };
-
-        let direction = directions.iter().find(|direction| {
-          path_event.display().to_string().starts_with(&direction.src)
-        }).unwrap();
-
-        let src_path = path_event.to_str().unwrap();
-        let dst_path = src_path.replace(&direction.src, &direction.dest);
-
-        let ignored = glob::match_patterns(&direction.ignore, &path_event.as_path());
-
-        match event_name {
-          EventType::Create => {
-            if !ignored {
-              fs::create_dir_all(Path::new(dst_path.as_str()).parent().unwrap()).unwrap();
-              if Path::new(src_path).is_file() {
-                fs::copy(src_path, dst_path).unwrap();
-              }
-            }
-          }
-          EventType::Write => {
-            if !ignored {
-              fs::create_dir_all(Path::new(dst_path.as_str()).parent().unwrap()).unwrap();
-              fs::copy(src_path, dst_path).unwrap();
-            }
-          }
-          EventType::Remove => {
-            if !ignored {
-              std::fs::remove_dir_all(dst_path).unwrap();
-            }
-          }
-        }
-
-        if !ignored {
-          on_event();
-        }
       },
       Err(e) => println!("Error: {:?}", e)
     }
