@@ -1,29 +1,44 @@
 mod copy;
 mod watcher;
 mod glob;
+mod config;
 
-pub struct Direction {
-  src_dir: String,
-  dst_dir: String,
-}
+use std::{process::{Command, Stdio}, env};
+
+use crate::config::get_config;
+
+
 
 fn main() {
-  let directions = [
-    Direction {
-      src_dir: "/Users/borisbelmar/Proyectos/Deerwatcher/test1".to_string(),
-      dst_dir: "/Users/borisbelmar/Proyectos/Deerwatcher/test2".to_string(),
-    }
-  ];
+  let args: Vec<String> = env::args().collect();
 
-  let ignored_list = [".git", "**/target/**/*", "**/src/**/*"];
+  let json_path = &args
+    .get(1)
+    .ok_or("No json path provided")
+    .unwrap();
+  
+  let config = get_config(json_path).unwrap();
+  
+  let directions = &config.list;
+  let command = config.command.as_str();
 
-  fn handle_event() {
+  let handle_event = || {
     println!("Event handled");
-  }
+    Command::new("sh")
+      .arg("-c")
+      .arg(command)
+      .stdout(Stdio::piped())
+      .output()
+      .expect("failed to execute process");
+  };
 
-  for direction in &directions {
-    copy::copy_recursive(&direction.src_dir, &direction.dst_dir, &ignored_list).unwrap();
-  }
+  directions.iter().for_each(|direction| {
+    copy::copy_recursive(
+      &direction.src,
+      &direction.dest,
+      &direction.ignore
+    ).unwrap();
+  });
 
-  watcher::watch_and_copy(&directions, &ignored_list, handle_event).unwrap();
+  watcher::watch_and_copy(&directions, &handle_event).unwrap();
 }

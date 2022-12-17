@@ -1,7 +1,8 @@
 use std::path::Path;
 use wax::{Glob, Pattern};
 
-pub fn match_patterns (patterns: &[&str], path: &Path) -> bool {
+pub fn match_patterns (patterns: &Vec<String>, path: &Path) -> bool {
+  let patterns: &Vec<&str> = &patterns.iter().map(|s| s.as_str()).collect();
   let any = wax::any::<Glob, _>(patterns.to_vec()).unwrap();
 
   if path.is_dir() {

@@ -8,13 +8,16 @@ use crate::glob::match_patterns;
 pub fn copy_recursive(
   src_dir: &str,
   dst_dir: &str,
-  ignored_list: &[&str],
+  ignored_list: &Vec<String>,
 ) -> Result<(), std::io::Error> {
   for entry in WalkDir::new(src_dir)
     .into_iter()
     .filter_entry(|e| {
       let path = e.path();
-      !match_patterns(ignored_list, path)
+      !match_patterns(
+        ignored_list,
+        path
+      )
     }) {
       let entry: walkdir::DirEntry = entry?.try_into().unwrap();
       let src_path = entry.path();

@@ -1,0 +1,22 @@
+{
+  "command": "git status",
+  "list": [
+    {
+      "src": "/Users/borisbelmar/Proyectos/Deerwatcher/test1",
+      "dest": "/Users/borisbelmar/Proyectos/Deerwatcher/test2",
+      "ignore": [
+        ".git",
+        ".DS_Store"
+      ]
+    },
+    {
+      "src": "/Users/borisbelmar/Proyectos/Deerwatcher/test3",
+      "dest": "/Users/borisbelmar/Proyectos/Deerwatcher/test4",
+      "ignore": [
+        ".git",
+        ".DS_Store",
+        "**/target/**/*"
+      ]
+    }
+  ]
+}

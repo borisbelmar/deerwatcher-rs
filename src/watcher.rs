@@ -4,31 +4,29 @@ use std::path::Path;
 use std::sync::mpsc::channel;
 use std::time::Duration;
 
-use crate::{glob, Direction};
+use crate::{glob, config::Item};
 
 enum EventType {
   Create,
   Write,
-  Remove,
-  Nothing
+  Remove
 }
 
-pub fn watch_and_copy(directions: &[Direction], ignore_list: &[&str], on_event: fn()) -> Result<(), std::io::Error> {
+pub fn watch_and_copy(directions: &Vec<Item>, on_event: &dyn Fn()) -> Result<(), std::io::Error> {
   let (tx, rx) = channel();
   let mut watcher = notify::watcher(tx, Duration::from_millis(100)).unwrap();
 
   for direction in directions {
-    println!("Watching {}", direction.src_dir);
-    watcher.watch(Path::new(&direction.src_dir), RecursiveMode::Recursive).unwrap();
+    println!("Watching {}", direction.src);
+    watcher.watch(Path::new(&direction.src), RecursiveMode::Recursive).unwrap();
   }
 
   loop {
     match rx.recv() {
       // FIXME: Its executing the process twice
       Ok(event) => {
-        let mut event_name: EventType = EventType::Nothing;
-
-        let mut path_event: PathBuf = PathBuf::new();
+        let event_name: EventType;
+        let path_event: PathBuf;
 
         match event {
           DebouncedEvent::Create(path) => {
@@ -43,17 +41,19 @@ pub fn watch_and_copy(directions: &[Direction], ignore_list: &[&str], on_event: 
             path_event = path;
             event_name = EventType::Remove;
           },
-          _ => {},
+          _ => {
+            continue;
+          },
         };
 
-        let direction: &Direction = directions.iter().find(|direction| {
-          path_event.display().to_string().starts_with(&direction.src_dir)
+        let direction = directions.iter().find(|direction| {
+          path_event.display().to_string().starts_with(&direction.src)
         }).unwrap();
 
         let src_path = path_event.to_str().unwrap();
-        let dst_path = src_path.replace(&direction.src_dir, &direction.dst_dir);
+        let dst_path = src_path.replace(&direction.src, &direction.dest);
 
-        let ignored = glob::match_patterns(ignore_list, &path_event.as_path());
+        let ignored = glob::match_patterns(&direction.ignore, &path_event.as_path());
 
         match event_name {
           EventType::Create => {
@@ -75,7 +75,6 @@ pub fn watch_and_copy(directions: &[Direction], ignore_list: &[&str], on_event: 
               std::fs::remove_dir_all(dst_path).unwrap();
             }
           }
-          EventType::Nothing => {}
         }
 
         if !ignored {
