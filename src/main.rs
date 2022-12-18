@@ -19,9 +19,13 @@ fn main() {
     .unwrap();
   
   let config = get_config(json_path).unwrap();
-  
+
   let directions = &config.list;
-  let command = config.command.as_str();
+
+  let command: &str = match &config.command {
+    Some(command) => command,
+    None => ""
+  };
 
   let handle_event = get_event_handler(command);
 
