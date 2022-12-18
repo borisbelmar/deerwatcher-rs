@@ -11,7 +11,7 @@ on:
 env:
   BIN_NAME: deerwatcher
   PROJECT_NAME: deerwatcher
-  REPO_NAME: borisbelmar/deerwatcher
+  REPO_NAME: borisbelmar/deerwatcher-rs
 
 jobs:
   dist:
