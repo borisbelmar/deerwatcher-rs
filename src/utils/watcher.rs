@@ -1,35 +1,36 @@
 use notify::{DebouncedEvent, RecursiveMode, Watcher};
-use std::{fs, path::PathBuf};
+use std::fs;
 use std::path::Path;
 use std::sync::mpsc::channel;
 use std::time::Duration;
 
-use crate::utils::{glob, config::Item};
+use crate::utils::{config::Item, glob};
 
 struct EventProps {
   ignored: bool,
   src: String,
-  dest: String
+  dest: String,
 }
 
-fn get_event_props (path: &PathBuf, directions: &Vec<Item>) -> EventProps {
-  let direction = directions.iter().find(|direction| {
-    path.display().to_string().starts_with(&direction.src)
-  }).unwrap();
+fn get_event_props(path: &Path, directions: &[Item]) -> EventProps {
+  let direction = directions
+    .iter()
+    .find(|direction| path.display().to_string().starts_with(&direction.src))
+    .unwrap();
 
   let src_path = path.to_str().unwrap();
   let dst_path = src_path.replace(&direction.src, &direction.dest);
 
-  let ignored = glob::match_patterns(&direction.ignore, &path.as_path());
+  let ignored = glob::match_patterns(&direction.ignore, path);
 
   EventProps {
     ignored,
     src: src_path.to_string(),
-    dest: dst_path
+    dest: dst_path,
   }
 }
 
-fn copy_file (event_props: &EventProps) {
+fn copy_file(event_props: &EventProps) {
   let src_path = Path::new(&event_props.src);
   let dst_path = Path::new(&event_props.dest);
 
@@ -42,7 +43,7 @@ fn copy_file (event_props: &EventProps) {
   }
 }
 
-fn remove_file (event_props: &EventProps) {
+fn remove_file(event_props: &EventProps) {
   let dst_path = Path::new(&event_props.dest);
 
   if !&event_props.ignored {
@@ -56,14 +57,15 @@ pub fn watch_and_copy(directions: &Vec<Item>, on_event: &dyn Fn()) -> Result<(),
 
   for direction in directions {
     println!("Watching {}", direction.src);
-    watcher.watch(Path::new(&direction.src), RecursiveMode::Recursive).unwrap();
+    watcher
+      .watch(Path::new(&direction.src), RecursiveMode::Recursive)
+      .unwrap();
   }
 
   loop {
     match rx.recv() {
       // FIXME: Its executing the process twice
       Ok(event) => {
-
         match event {
           DebouncedEvent::Create(path) => {
             let event_props = get_event_props(&path, directions);
@@ -71,27 +73,27 @@ pub fn watch_and_copy(directions: &Vec<Item>, on_event: &dyn Fn()) -> Result<(),
             if !&event_props.ignored {
               on_event();
             }
-          },
+          }
           DebouncedEvent::Write(path) => {
             let event_props = get_event_props(&path, directions);
             copy_file(&event_props);
             if !&event_props.ignored {
               on_event();
             }
-          },
+          }
           DebouncedEvent::Remove(path) => {
             let event_props = get_event_props(&path, directions);
             remove_file(&event_props);
             if !&event_props.ignored {
               on_event();
             }
-          },
+          }
           _ => {
             continue;
-          },
+          }
         };
-      },
-      Err(e) => println!("Error: {:?}", e)
+      }
+      Err(e) => println!("Error: {:?}", e),
     }
   }
 }

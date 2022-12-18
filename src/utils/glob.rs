@@ -1,22 +1,20 @@
 use std::path::Path;
 use wax::{Glob, Pattern};
 
-pub fn match_patterns (patterns: &Vec<String>, path: &Path) -> bool {
+pub fn match_patterns(patterns: &[String], path: &Path) -> bool {
   let patterns: &Vec<&str> = &patterns.iter().map(|s| s.as_str()).collect();
   let any = wax::any::<Glob, _>(patterns.to_vec()).unwrap();
 
   if path.is_dir() {
     let mut ignore = false;
     let parent = path.parent().unwrap().to_str().unwrap();
-    if parent == "" {
+    if parent.is_empty() {
       return false;
     }
     for pattern in patterns {
       // TODO: Validate this
       if pattern.ends_with("**/*") && pattern.starts_with("**/") {
-        let pattern = pattern
-          .replace("/**/*", "")
-          .replace("**/", "");
+        let pattern = pattern.replace("/**/*", "").replace("**/", "");
         let path_without_parent = path
           .to_str()
           .unwrap()
@@ -28,6 +26,6 @@ pub fn match_patterns (patterns: &Vec<String>, path: &Path) -> bool {
     }
     return ignore;
   }
-  
+
   any.is_match(path)
 }

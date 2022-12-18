@@ -1,8 +1,9 @@
 use std::process::{Command, Stdio};
 
-pub fn get_event_handler <'a>(command: &'a str) -> impl Fn() + 'a {
+pub fn get_event_handler(command: &str) -> impl Fn() + '_ {
+  #[allow(clippy::needless_return)]
   return move || {
-    if command != "" {
+    if !command.is_empty() {
       println!("Executing command: {}", command);
       Command::new("sh")
         .arg("-c")

@@ -1,12 +1,14 @@
-use tempfile::NamedTempFile;
 use std::io::Write;
+use tempfile::NamedTempFile;
 
 use deerwatcher::utils::config::get_config;
 
 #[test]
-fn test_get_config () {
+fn test_get_config() {
   let mut temp_file = NamedTempFile::new().unwrap();
-  write!(temp_file, r#"{{
+  write!(
+    temp_file,
+    r#"{{
     "command": "echo 'Hello World!'",
     "list": [
       {{
@@ -17,8 +19,10 @@ fn test_get_config () {
         ]
       }}
     ]
-  }}"#).unwrap();
-  
+  }}"#
+  )
+  .unwrap();
+
   // Get the path to the temporary file
   let file_path = temp_file.path().to_str().unwrap();
 
@@ -31,9 +35,11 @@ fn test_get_config () {
 }
 
 #[test]
-fn test_get_config_without_command () {
+fn test_get_config_without_command() {
   let mut temp_file = NamedTempFile::new().unwrap();
-  write!(temp_file, r#"{{
+  write!(
+    temp_file,
+    r#"{{
     "list": [
       {{
         "src": "src",
@@ -43,8 +49,10 @@ fn test_get_config_without_command () {
         ]
       }}
     ]
-  }}"#).unwrap();
-  
+  }}"#
+  )
+  .unwrap();
+
   // Get the path to the temporary file
   let file_path = temp_file.path().to_str().unwrap();
 
