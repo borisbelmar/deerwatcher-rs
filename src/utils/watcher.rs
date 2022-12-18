@@ -4,7 +4,7 @@ use std::path::Path;
 use std::sync::mpsc::channel;
 use std::time::Duration;
 
-use crate::{glob, config::Item};
+use crate::utils::{glob, config::Item};
 
 struct EventProps {
   ignored: bool,

@@ -3,7 +3,7 @@ use std::path::Path;
 use walkdir::WalkDir;
 use std::convert::TryInto;
 
-use crate::glob::match_patterns;
+use crate::utils::glob::match_patterns;
 
 pub fn copy_recursive(
   src_dir: &str,

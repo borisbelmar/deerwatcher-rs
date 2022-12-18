@@ -3,6 +3,7 @@ use std::process::{Command, Stdio};
 pub fn get_event_handler <'a>(command: &'a str) -> impl Fn() + 'a {
   return move || {
     if command != "" {
+      println!("Executing command: {}", command);
       Command::new("sh")
         .arg("-c")
         .arg(command)

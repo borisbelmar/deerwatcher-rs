@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::fs::File;
 
 #[derive(Serialize, Deserialize)]
 pub struct Config {
@@ -15,7 +16,7 @@ pub struct Item {
 
 
 pub fn get_config (json_path: &str) -> Result<Config, std::io::Error> {
-  let file = std::fs::File::open(json_path)?;
+  let file = File::open(json_path)?;
   let reader = std::io::BufReader::new(file);
   let config: Config = serde_json::from_reader(reader)?;
   Ok(config)

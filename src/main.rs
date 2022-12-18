@@ -1,14 +1,6 @@
-mod copy;
-mod watcher;
-mod glob;
-mod config;
-mod execute;
-
 use std::env;
 
-use execute::get_event_handler;
-
-use crate::config::get_config;
+use deerwatcher::utils::{copy, execute, watcher, config};
 
 fn main() {
   let args: Vec<String> = env::args().collect();
@@ -18,7 +10,7 @@ fn main() {
     .ok_or("No json path provided")
     .unwrap();
   
-  let config = get_config(json_path).unwrap();
+  let config = config::get_config(json_path).unwrap();
 
   let directions = &config.list;
 
@@ -27,7 +19,7 @@ fn main() {
     None => ""
   };
 
-  let handle_event = get_event_handler(command);
+  let handle_event = execute::get_event_handler(command);
 
   directions.iter().for_each(|direction| {
     copy::copy_recursive(
